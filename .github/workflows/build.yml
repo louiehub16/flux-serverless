@@ -4,9 +4,6 @@ on:
     branches: [main]
   workflow_dispatch:
 
-env:
-  DOCKERHUB_REPO: hrm3478938/flux-serverless
-
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
@@ -29,9 +26,14 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Build & Push FLUX image
+      - name: Build & Push FLUX RunPod image
         run: |
           docker build --pull -f tools/Dockerfile.flux \
-            -t ${{ env.DOCKERHUB_REPO }}:latest \
-            -t ${{ env.DOCKERHUB_REPO }}:${{ github.sha }} tools/
-          docker push --all-tags ${{ env.DOCKERHUB_REPO }}
+            -t hrm3478938/flux-serverless:latest tools/
+          docker push hrm3478938/flux-serverless:latest
+
+      - name: Build & Push FLUX Salad HTTP image
+        run: |
+          docker build --pull -f tools/Dockerfile.http \
+            -t hrm3478938/flux-http:latest tools/
+          docker push hrm3478938/flux-http:latest
