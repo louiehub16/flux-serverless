@@ -1,9 +1,11 @@
 FROM nvidia/cuda:12.1.1-runtime-ubuntu22.04
 ENV DEBIAN_FRONTEND=noninteractive PYTHONUNBUFFERED=1 PIP_NO_CACHE_DIR=1
 RUN apt-get update && apt-get install -y --no-install-recommends python3.10 python3-pip git libgl1 libglib2.0-0 && rm -rf /var/lib/apt/lists/*
-RUN pip3 install --upgrade pip && \
-    pip3 install runpod torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121 && \
-    pip3 install diffusers transformers accelerate sentencepiece protobuf pillow
+# runpod from PyPI (default index)
+RUN pip3 install --upgrade pip && pip3 install runpod pillow
+# torch etc from PyTorch cu121 index (separate command so --index-url only applies to torch)
+RUN pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121 && \
+    pip3 install diffusers transformers accelerate sentencepiece protobuf
 WORKDIR /app
 COPY flux_handler.py /app/flux_handler.py
 CMD ["python3", "-u", "/app/flux_handler.py"]
