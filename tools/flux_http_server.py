@@ -60,4 +60,7 @@ def generate(req: GenRequest):
 
 if __name__ == "__main__":
     port = int(os.getenv("PORT", "8000"))
-    uvicorn.run(app, host="0.0.0.0", port=port)
+    # IMPORTANT: bind to dual-stack IPv6 "::" so Salad's container gateway (which routes
+    # inbound over IPv6) can reach the server. Binding "0.0.0.0" (IPv4 only) makes the
+    # gateway's IPv6 health probes time out and the public URL never gets exposed.
+    uvicorn.run(app, host="::", port=port)
