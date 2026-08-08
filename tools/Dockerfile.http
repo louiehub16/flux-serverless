@@ -1,12 +1,19 @@
 FROM nvidia/cuda:12.1.1-runtime-ubuntu22.04
 ENV DEBIAN_FRONTEND=noninteractive PYTHONUNBUFFERED=1 PIP_NO_CACHE_DIR=1
-RUN apt-get update && apt-get install -y --no-install-recommends python3.10 python3-pip git libgl1 libglib2.0-0 && rm -rf /var/lib/apt/lists/*
-# RunPod-free HTTP deps from default index
+# Install python + openssh-server + sudo for SSH debugging
+RUN apt-get update && apt-get install -y --no-install-recommends \
+      python3.10 python3-pip git libgl1 libglib2.0-0 openssh-server sudo \
+    && rm -rf /var/lib/apt/lists/*
+# HTTP deps (default index)
 RUN pip3 install --upgrade pip && pip3 install pillow fastapi uvicorn pydantic
-# torch etc from cu121 index (separate command so --index-url only hits torch)
+# torch + diffusers from cu121 index (separate so --index-url only hits torch)
 RUN pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121 && \
     pip3 install diffusers transformers accelerate sentencepiece protobuf
+
 WORKDIR /app
 COPY flux_http_server.py /app/flux_http_server.py
-EXPOSE 8000
-CMD ["python3", "-u", "/app/flux_http_server.py"]
+COPY entrypoint.sh /app/entrypoint.sh
+RUN chmod +x /app/entrypoint.sh
+EXPOSE 8000 22
+# ENTRYPOINT runs SSH + the crash-proof FLUX server, logs to /tmp/flux_debug.log
+CMD ["/app/entrypoint.sh"]
